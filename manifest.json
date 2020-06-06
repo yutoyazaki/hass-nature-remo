@@ -1,0 +1,8 @@
+{
+  "domain": "nature_remo",
+  "name": "Nature Remo",
+  "documentation": "https://github.com/yutoyazaki/hass-nature-remo",
+  "codeowners": [
+    "@yutoyazaki"
+  ]
+}
