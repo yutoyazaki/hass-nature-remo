@@ -17,6 +17,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     """Set up the Nature Remo E sensor."""
     if discovery_info is None:
         return
+    _LOGGER.debug("Setting up sensor platform.")
     coordinator = hass.data[DOMAIN]["coordinator"]
     appliances = coordinator.data
     async_add_entities(
@@ -61,6 +62,7 @@ class NatureRemoE(Entity):
         measured_instantaneous = next(
             value["val"] for value in echonetlite_properties if value["epc"] == 231
         )
+        _LOGGER.debug("Current state: %sW", measured_instantaneous)
         return measured_instantaneous
 
     @property

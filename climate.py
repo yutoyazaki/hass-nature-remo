@@ -46,7 +46,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     """Set up the Nature Remo AC."""
     if discovery_info is None:
         return
-    _LOGGER.info("Start setup platform")
+    _LOGGER.debug("Setting up climate platform.")
     coordinator = hass.data[DOMAIN]["coordinator"]
     api = hass.data[DOMAIN]["api"]
     config = hass.data[DOMAIN]["config"]
@@ -124,6 +124,7 @@ class NatureRemoAC(ClimateEntity):
     @property
     def target_temperature(self):
         """Return the temperature we try to reach."""
+        _LOGGER.debug("Current target temperature: %s", self._target_temperature)
         return self._target_temperature
 
     @property
@@ -167,13 +168,13 @@ class NatureRemoAC(ClimateEntity):
         if target_temp is None:
             return
         target_temp = int(target_temp)
-        _LOGGER.info("Set temperature %d", target_temp)
+        _LOGGER.debug("Set temperature: %d", target_temp)
         await self._post({"temperature": f"{target_temp}"})
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set new target hvac mode."""
+        _LOGGER.debug("Set hvac mode: %s", hvac_mode)
         mode = MODE_HA_TO_REMO[hvac_mode]
-        _LOGGER.info("Set mode %s", mode)
         if mode == MODE_HA_TO_REMO[HVAC_MODE_OFF]:
             await self._post({"button": mode})
         else:
@@ -186,10 +187,12 @@ class NatureRemoAC(ClimateEntity):
 
     async def async_set_fan_mode(self, fan_mode):
         """Set new target fan mode."""
+        _LOGGER.debug("Set fan mode: %s", fan_mode)
         await self._post({"air_volume": fan_mode})
 
     async def async_set_swing_mode(self, swing_mode):
         """Set new target swing operation."""
+        _LOGGER.debug("Set swing mode: %s", swing_mode)
         await self._post({"air_direction": swing_mode})
 
     async def async_added_to_hass(self):

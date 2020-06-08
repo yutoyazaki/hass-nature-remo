@@ -40,6 +40,7 @@ CONFIG_SCHEMA = vol.Schema(
 
 async def async_setup(hass, config):
     """Set up Nature Remo component."""
+    _LOGGER.debug("Setting up Nature Remo component.")
     access_token = config[DOMAIN][CONF_ACCESS_TOKEN]
     session = async_get_clientsession(hass)
     api = NatureRemoAPI(access_token, session)
@@ -72,12 +73,14 @@ class NatureRemoAPI:
 
     async def get(self):
         """Get appliance list"""
+        _LOGGER.debug("Trying to fetch appliance list from API.")
         headers = {"Authorization": f"Bearer {self._access_token}"}
         response = await self._session.get(f"{_RESOURCE}/appliances", headers=headers)
         return {x["id"]: x for x in await response.json()}
 
     async def post(self, path, data):
         """Post any request"""
+        _LOGGER.debug("Trying to request post:%s, data:%s", path, data)
         headers = {"Authorization": f"Bearer {self._access_token}"}
         response = await self._session.post(
             f"{_RESOURCE}{path}", data=data, headers=headers
