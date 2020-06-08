@@ -178,12 +178,10 @@ class NatureRemoAC(ClimateEntity):
         if mode == MODE_HA_TO_REMO[HVAC_MODE_OFF]:
             await self._post({"button": mode})
         else:
-            await self._post(
-                {
-                    "operation_mode": mode,
-                    "temperature": self._default_temp.get(hvac_mode),
-                }
-            )
+            data = {"operation_mode": mode}
+            if self._default_temp.get(hvac_mode):
+                data["temperature"] = self._default_temp[hvac_mode]
+            await self._post(data)
 
     async def async_set_fan_mode(self, fan_mode):
         """Set new target fan mode."""
