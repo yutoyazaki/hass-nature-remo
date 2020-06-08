@@ -3,7 +3,10 @@ import logging
 import requests
 import voluptuous as vol
 
+from datetime import timedelta
 from homeassistant.helpers import config_validation as cv, discovery
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.const import CONF_ACCESS_TOKEN
 
 _LOGGER = logging.getLogger(__name__)
@@ -15,14 +18,19 @@ CONF_COOL_TEMP = "cool_temperature"
 CONF_HEAT_TEMP = "heat_temperature"
 DEFAULT_COOL_TEMP = 28
 DEFAULT_HEAT_TEMP = 20
+DEFAULT_UPDATE_INTERVAL = timedelta(seconds=60)
 
 CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema(
             {
                 vol.Required(CONF_ACCESS_TOKEN): cv.string,
-                vol.Optional(CONF_COOL_TEMP, default=DEFAULT_COOL_TEMP): vol.Coerce(int),
-                vol.Optional(CONF_HEAT_TEMP, default=DEFAULT_HEAT_TEMP): vol.Coerce(int),
+                vol.Optional(CONF_COOL_TEMP, default=DEFAULT_COOL_TEMP): vol.Coerce(
+                    int
+                ),
+                vol.Optional(CONF_HEAT_TEMP, default=DEFAULT_HEAT_TEMP): vol.Coerce(
+                    int
+                ),
             }
         )
     },
@@ -30,33 +38,44 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 
-def setup(hass, config):
+async def async_setup(hass, config):
     """Set up Nature Remo component."""
     access_token = config[DOMAIN][CONF_ACCESS_TOKEN]
-    api = NatureRemoAPI(access_token)
-    appliances = api.get_appliance_list()
+    session = async_get_clientsession(hass)
+    api = NatureRemoAPI(access_token, session)
+    coordinator = hass.data[DOMAIN] = DataUpdateCoordinator(
+        hass,
+        _LOGGER,
+        name="Nature Remo update",
+        update_method=api.get,
+        update_interval=DEFAULT_UPDATE_INTERVAL,
+    )
+    await coordinator.async_refresh()
     hass.data[DOMAIN] = {
         "api": api,
-        "appliances": appliances,
-        "config": config[DOMAIN]
+        "coordinator": coordinator,
+        "config": config[DOMAIN],
     }
 
-    discovery.load_platform(hass, 'sensor', DOMAIN, {}, config)
-    discovery.load_platform(hass, 'climate', DOMAIN, {}, config)
+    await discovery.async_load_platform(hass, "sensor", DOMAIN, {}, config)
+    # discovery.load_platform(hass, "climate", DOMAIN, {}, config)
     return True
 
-class NatureRemoAPI:
-  def __init__(self, access_token):
-      self._access_token = access_token
-  
-  def get_appliance_list(self, appliance_id=None):
-    headers = {"Authorization": f"Bearer {self._access_token}"}
-    response = requests.get(f"{_RESOURCE}/appliances", headers=headers).json()
-    if appliance_id:
-      return next(appliance for appliance in response if appliance["id"] == appliance_id)
-    else:
-      return response
 
-  def post(self, path, data):
-    headers = {"Authorization": f"Bearer {self._access_token}"}
-    return requests.post(f"{_RESOURCE}{path}", data=data, headers=headers).json()
+class NatureRemoAPI:
+    """Nature Remo API client"""
+
+    def __init__(self, access_token, session):
+        """Init API client"""
+        self._access_token = access_token
+        self._session = session
+
+    async def get(self):
+        """Get appliance list"""
+        headers = {"Authorization": f"Bearer {self._access_token}"}
+        response = await self._session.get(f"{_RESOURCE}/appliances", headers=headers)
+        return {x["id"]: x for x in await response.json()}
+
+    def post(self, path, data):
+        headers = {"Authorization": f"Bearer {self._access_token}"}
+        return requests.post(f"{_RESOURCE}{path}", data=data, headers=headers).json()
