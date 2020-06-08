@@ -58,7 +58,7 @@ async def async_setup(hass, config):
     }
 
     await discovery.async_load_platform(hass, "sensor", DOMAIN, {}, config)
-    # discovery.load_platform(hass, "climate", DOMAIN, {}, config)
+    await discovery.async_load_platform(hass, "climate", DOMAIN, {}, config)
     return True
 
 
@@ -76,6 +76,10 @@ class NatureRemoAPI:
         response = await self._session.get(f"{_RESOURCE}/appliances", headers=headers)
         return {x["id"]: x for x in await response.json()}
 
-    def post(self, path, data):
+    async def post(self, path, data):
+        """Post any request"""
         headers = {"Authorization": f"Bearer {self._access_token}"}
-        return requests.post(f"{_RESOURCE}{path}", data=data, headers=headers).json()
+        response = await self._session.post(
+            f"{_RESOURCE}{path}", data=data, headers=headers
+        )
+        return await response.json()
