@@ -1,6 +1,5 @@
 """The Nature Remo integration."""
 import logging
-import requests
 import voluptuous as vol
 
 from datetime import timedelta

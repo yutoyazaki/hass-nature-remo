@@ -78,6 +78,7 @@ class NatureRemoAC(ClimateEntity):
         self._remo_mode = None
         self._fan_mode = None
         self._swing_mode = None
+        self._last_target_temperature = {v: None for v in MODE_REMO_TO_HA}
         self._update(appliance["settings"])
 
     @property
@@ -162,6 +163,14 @@ class NatureRemoAC(ClimateEntity):
         """List of available swing modes."""
         return self._modes[self._remo_mode]["dir"]
 
+    @property
+    def device_state_attributes(self):
+        """Return device specific state attributes."""
+        return {
+            ATTR_ATTRIBUTION: ATTRIBUTION,
+            "previous_target_temperature": self._last_target_temperature,
+        }
+
     async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
         target_temp = kwargs.get(ATTR_TEMPERATURE)
@@ -179,7 +188,9 @@ class NatureRemoAC(ClimateEntity):
             await self._post({"button": mode})
         else:
             data = {"operation_mode": mode}
-            if self._default_temp.get(hvac_mode):
+            if self._last_target_temperature[mode]:
+                data["temperature"] = self._last_target_temperature[mode]
+            elif self._default_temp.get(hvac_mode):
                 data["temperature"] = self._default_temp[hvac_mode]
             await self._post(data)
 
@@ -211,6 +222,7 @@ class NatureRemoAC(ClimateEntity):
         self._remo_mode = ac_settings["mode"]
         try:
             self._target_temperature = float(ac_settings["temp"])
+            self._last_target_temperature[self._remo_mode] = ac_settings["temp"]
         except:
             self._target_temperature = None
 
