@@ -167,7 +167,6 @@ class NatureRemoAC(ClimateEntity):
     def device_state_attributes(self):
         """Return device specific state attributes."""
         return {
-            ATTR_ATTRIBUTION: ATTRIBUTION,
             "previous_target_temperature": self._last_target_temperature,
         }
 
