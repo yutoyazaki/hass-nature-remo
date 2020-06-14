@@ -14,7 +14,7 @@ Yet another [Home Assistant](https://www.home-assistant.io) component for [Natur
   - [x] Set temperature
   - [x] Set fan mode
   - [x] Set swing mode
-  - [ ] Remember previous target temperatures when switching modes back and forth
+  - [x] Remember previous target temperatures when switching modes back and forth
 - [x] Energy Sensor (Nature Remo E/E Lite)
   - [x] Fetch current power usage
 - [ ] Switch
