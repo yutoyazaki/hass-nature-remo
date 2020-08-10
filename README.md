@@ -21,6 +21,7 @@ Yet another [Home Assistant](https://www.home-assistant.io) component for [Natur
 - [ ] Light
 - [ ] TV
 - [ ] Others
+  - [ ] Fetch sensor data
 
 ## Installation
 
