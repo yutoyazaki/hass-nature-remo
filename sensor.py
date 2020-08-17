@@ -18,7 +18,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         return
     _LOGGER.debug("Setting up sensor platform.")
     coordinator = hass.data[DOMAIN]["coordinator"]
-    appliances = coordinator.data
+    appliances = coordinator.data["appliances"]
     async_add_entities(
         [
             NatureRemoE(coordinator, appliance)
@@ -38,7 +38,8 @@ class NatureRemoE(NatureRemoBase):
     @property
     def state(self):
         """Return the state of the sensor."""
-        smart_meter = self._coordinator.data[self._appliance_id]["smart_meter"]
+        appliance = self._coordinator.data["appliances"][self._appliance_id]
+        smart_meter = appliance["smart_meter"]
         echonetlite_properties = smart_meter["echonetlite_properties"]
         measured_instantaneous = next(
             value["val"] for value in echonetlite_properties if value["epc"] == 231

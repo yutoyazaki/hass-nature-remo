@@ -50,7 +50,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     coordinator = hass.data[DOMAIN]["coordinator"]
     api = hass.data[DOMAIN]["api"]
     config = hass.data[DOMAIN]["config"]
-    appliances = coordinator.data
+    appliances = coordinator.data["appliances"]
     async_add_entities(
         [
             NatureRemoAC(coordinator, api, appliance, config)
@@ -72,6 +72,7 @@ class NatureRemoAC(NatureRemoBase, ClimateEntity):
         }
         self._modes = appliance["aircon"]["range"]["modes"]
         self._hvac_mode = None
+        self._current_temperature = None
         self._target_temperature = None
         self._remo_mode = None
         self._fan_mode = None
@@ -83,6 +84,11 @@ class NatureRemoAC(NatureRemoBase, ClimateEntity):
     def supported_features(self):
         """Return the list of supported features."""
         return SUPPORT_FLAGS
+
+    @property
+    def current_temperature(self):
+        """Return the current temperature."""
+        return self._current_temperature
 
     @property
     def temperature_unit(self):
@@ -199,7 +205,7 @@ class NatureRemoAC(NatureRemoBase, ClimateEntity):
         """
         await self._coordinator.async_request_refresh()
 
-    def _update(self, ac_settings):
+    def _update(self, ac_settings, device=None):
         # hold this to determin the ac mode while it's turned-off
         self._remo_mode = ac_settings["mode"]
         try:
@@ -216,9 +222,15 @@ class NatureRemoAC(NatureRemoBase, ClimateEntity):
         self._fan_mode = ac_settings["vol"] or None
         self._swing_mode = ac_settings["dir"] or None
 
+        if device is not None:
+            self._current_temperature = float(device["newest_events"]["te"]["val"])
+
     @callback
     def _update_callback(self):
-        self._update(self._coordinator.data[self._appliance_id]["settings"])
+        self._update(
+            self._coordinator.data["appliances"][self._appliance_id]["settings"],
+            self._coordinator.data["devices"][self._device["id"]],
+        )
         self.async_write_ha_state()
 
     async def _post(self, data):

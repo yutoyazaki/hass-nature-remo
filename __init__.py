@@ -72,11 +72,14 @@ class NatureRemoAPI:
         self._session = session
 
     async def get(self):
-        """Get appliance list"""
-        _LOGGER.debug("Trying to fetch appliance list from API.")
+        """Get appliance and device list"""
+        _LOGGER.debug("Trying to fetch appliance and device list from API.")
         headers = {"Authorization": f"Bearer {self._access_token}"}
         response = await self._session.get(f"{_RESOURCE}/appliances", headers=headers)
-        return {x["id"]: x for x in await response.json()}
+        appliances = {x["id"]: x for x in await response.json()}
+        response = await self._session.get(f"{_RESOURCE}/devices", headers=headers)
+        devices = {x["id"]: x for x in await response.json()}
+        return {"appliances": appliances, "devices": devices}
 
     async def post(self, path, data):
         """Post any request"""
