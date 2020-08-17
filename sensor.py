@@ -7,8 +7,7 @@ from homeassistant.const import (
     POWER_WATT,
     DEVICE_CLASS_POWER,
 )
-from homeassistant.helpers.entity import Entity
-from . import DOMAIN
+from . import DOMAIN, NatureRemoBase
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,30 +28,12 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     )
 
 
-class NatureRemoE(Entity):
+class NatureRemoE(NatureRemoBase):
     """Implementation of a Nature Remo E sensor."""
 
     def __init__(self, coordinator, appliance):
-        self._coordinator = coordinator
-        self._name = f"Nature Remo {appliance['nickname']}"
-        self._state = None
+        super().__init__(coordinator, appliance)
         self._unit_of_measurement = POWER_WATT
-        self._appliance_id = appliance["id"]
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return self._appliance_id
-
-    @property
-    def should_poll(self):
-        """Return the polling requirement of the entity."""
-        return False
 
     @property
     def state(self):

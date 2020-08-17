@@ -17,7 +17,7 @@ from homeassistant.components.climate.const import (
     SUPPORT_TARGET_TEMPERATURE,
 )
 from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
-from . import DOMAIN, CONF_COOL_TEMP, CONF_HEAT_TEMP
+from . import DOMAIN, CONF_COOL_TEMP, CONF_HEAT_TEMP, NatureRemoBase
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,18 +60,16 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     )
 
 
-class NatureRemoAC(ClimateEntity):
+class NatureRemoAC(NatureRemoBase, ClimateEntity):
     """Implementation of a Nature Remo E sensor."""
 
     def __init__(self, coordinator, api, appliance, config):
-        self._coordinator = coordinator
+        super().__init__(coordinator, appliance)
         self._api = api
         self._default_temp = {
             HVAC_MODE_COOL: config[CONF_COOL_TEMP],
             HVAC_MODE_HEAT: config[CONF_HEAT_TEMP],
         }
-        self._name = f"Nature Remo {appliance['nickname']}"
-        self._appliance_id = appliance["id"]
         self._modes = appliance["aircon"]["range"]["modes"]
         self._hvac_mode = None
         self._target_temperature = None
@@ -80,21 +78,6 @@ class NatureRemoAC(ClimateEntity):
         self._swing_mode = None
         self._last_target_temperature = {v: None for v in MODE_REMO_TO_HA}
         self._update(appliance["settings"])
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return self._appliance_id
-
-    @property
-    def should_poll(self):
-        """Return the polling requirement of the entity."""
-        return False
 
     @property
     def supported_features(self):
