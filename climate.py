@@ -17,7 +17,7 @@ from homeassistant.components.climate.const import (
     SUPPORT_TARGET_TEMPERATURE,
 )
 from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
-from . import DOMAIN, CONF_COOL_TEMP, CONF_HEAT_TEMP
+from . import DOMAIN, CONF_COOL_TEMP, CONF_HEAT_TEMP, NatureRemoBase
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     coordinator = hass.data[DOMAIN]["coordinator"]
     api = hass.data[DOMAIN]["api"]
     config = hass.data[DOMAIN]["config"]
-    appliances = coordinator.data
+    appliances = coordinator.data["appliances"]
     async_add_entities(
         [
             NatureRemoAC(coordinator, api, appliance, config)
@@ -60,20 +60,19 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     )
 
 
-class NatureRemoAC(ClimateEntity):
+class NatureRemoAC(NatureRemoBase, ClimateEntity):
     """Implementation of a Nature Remo E sensor."""
 
     def __init__(self, coordinator, api, appliance, config):
-        self._coordinator = coordinator
+        super().__init__(coordinator, appliance)
         self._api = api
         self._default_temp = {
             HVAC_MODE_COOL: config[CONF_COOL_TEMP],
             HVAC_MODE_HEAT: config[CONF_HEAT_TEMP],
         }
-        self._name = f"Nature Remo {appliance['nickname']}"
-        self._appliance_id = appliance["id"]
         self._modes = appliance["aircon"]["range"]["modes"]
         self._hvac_mode = None
+        self._current_temperature = None
         self._target_temperature = None
         self._remo_mode = None
         self._fan_mode = None
@@ -82,24 +81,14 @@ class NatureRemoAC(ClimateEntity):
         self._update(appliance["settings"])
 
     @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return self._appliance_id
-
-    @property
-    def should_poll(self):
-        """Return the polling requirement of the entity."""
-        return False
-
-    @property
     def supported_features(self):
         """Return the list of supported features."""
         return SUPPORT_FLAGS
+
+    @property
+    def current_temperature(self):
+        """Return the current temperature."""
+        return self._current_temperature
 
     @property
     def temperature_unit(self):
@@ -216,7 +205,7 @@ class NatureRemoAC(ClimateEntity):
         """
         await self._coordinator.async_request_refresh()
 
-    def _update(self, ac_settings):
+    def _update(self, ac_settings, device=None):
         # hold this to determin the ac mode while it's turned-off
         self._remo_mode = ac_settings["mode"]
         try:
@@ -233,9 +222,15 @@ class NatureRemoAC(ClimateEntity):
         self._fan_mode = ac_settings["vol"] or None
         self._swing_mode = ac_settings["dir"] or None
 
+        if device is not None:
+            self._current_temperature = float(device["newest_events"]["te"]["val"])
+
     @callback
     def _update_callback(self):
-        self._update(self._coordinator.data[self._appliance_id]["settings"])
+        self._update(
+            self._coordinator.data["appliances"][self._appliance_id]["settings"],
+            self._coordinator.data["devices"][self._device["id"]],
+        )
         self.async_write_ha_state()
 
     async def _post(self, data):
