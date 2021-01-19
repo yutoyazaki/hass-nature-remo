@@ -100,7 +100,7 @@ class NatureRemoAC(NatureRemoBase, ClimateEntity):
         """Return the minimum temperature."""
         temp_range = self._current_mode_temp_range()
         if len(temp_range) == 0:
-            return DEFAULT_MIN_TEMP
+            return 0
         return min(temp_range)
 
     @property
@@ -108,7 +108,7 @@ class NatureRemoAC(NatureRemoBase, ClimateEntity):
         """Return the maximum temperature."""
         temp_range = self._current_mode_temp_range()
         if len(temp_range) == 0:
-            return DEFAULT_MAX_TEMP
+            return 0
         return max(temp_range)
 
     @property
@@ -120,6 +120,12 @@ class NatureRemoAC(NatureRemoBase, ClimateEntity):
     @property
     def target_temperature_step(self):
         """Return the supported step of target temperature."""
+        temp_range = self._current_mode_temp_range()
+        if len(temp_range) >= 2:
+            # determine step from the gap of first and second temperature
+            step = round(temp_range[1] - temp_range[0], 1)
+            if step in [1.0, 0.5]:  # valid steps
+                return step
         return 1
 
     @property
@@ -164,7 +170,9 @@ class NatureRemoAC(NatureRemoBase, ClimateEntity):
         target_temp = kwargs.get(ATTR_TEMPERATURE)
         if target_temp is None:
             return
-        target_temp = int(target_temp)
+        if target_temp.is_integer():
+            # has to cast to whole number otherwise API will return an error
+            target_temp = int(target_temp)
         _LOGGER.debug("Set temperature: %d", target_temp)
         await self._post({"temperature": f"{target_temp}"})
 
@@ -242,4 +250,4 @@ class NatureRemoAC(NatureRemoBase, ClimateEntity):
 
     def _current_mode_temp_range(self):
         temp_range = self._modes[self._remo_mode]["temp"]
-        return list(map(int, filter(None, temp_range)))
+        return list(map(float, filter(None, temp_range)))
