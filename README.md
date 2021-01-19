@@ -61,4 +61,4 @@ nature_remo:
   access_token: YOUR_ACCESS_TOKEN
 ```
 
-※Tested on Home Assistant Core on Docker v0.114.3
+※Tested on Home Assistant Core 2020.12.1 on Docker
