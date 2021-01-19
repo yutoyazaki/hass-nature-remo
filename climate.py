@@ -130,7 +130,10 @@ class NatureRemoAC(NatureRemoBase, ClimateEntity):
     @property
     def hvac_modes(self):
         """Return the list of available operation modes."""
-        return list(MODE_HA_TO_REMO.keys())
+        remo_modes = list(self._modes.keys())
+        ha_modes = list(map(lambda mode: MODE_REMO_TO_HA[mode], remo_modes))
+        ha_modes.append(HVAC_MODE_OFF)
+        return ha_modes
 
     @property
     def fan_mode(self):
