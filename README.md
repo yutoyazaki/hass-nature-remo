@@ -23,6 +23,8 @@ Yet another [Home Assistant](https://www.home-assistant.io) component for [Natur
 - [ ] Others
   - [ ] Fetch sensor data
 
+Tested on Home Assistant Core 2021.3.3 on Docker
+
 ## Installation
 
 ### Manual Install
@@ -60,5 +62,3 @@ git submodule add https://github.com/yutoyazaki/hass-nature-remo.git {path_to_cu
 nature_remo:
   access_token: YOUR_ACCESS_TOKEN
 ```
-
-※Tested on Home Assistant Core 2020.12.1 on Docker
