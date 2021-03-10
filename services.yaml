@@ -1,0 +1,41 @@
+press_light_button:
+  name: Press light button
+  description: Sends the signal of a button that Remo automatically recognized.
+  target:
+    entity:
+      domain: light
+  fields:
+    button_name:
+      name: Button
+      description: The button that you want to press
+      required: true
+      advanced: false
+      example: 'on_off'
+      selector:
+        select:
+          options:
+            - 'on'
+            - 'max'
+            - 'favorite'
+            - 'on_off'
+            - 'night'
+            - 'bright_up'
+            - 'bright_down'
+            - 'color_temp_up'
+            - 'color_temp_down'
+
+press_custom_button:
+  name: Press custom button
+  description: Sends the signal of a button that you had to manually register.
+  target:
+    entity:
+      domain: light
+  fields:
+    button_name:
+      name: Button name
+      description: The name you gave the custom button in the Remo app
+      required: true
+      advanced: false
+      example: 'Eco'
+      selector:
+        text:
