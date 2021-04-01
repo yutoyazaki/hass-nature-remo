@@ -18,7 +18,7 @@ Yet another [Home Assistant](https://www.home-assistant.io) component for [Natur
 - [x] Energy Sensor (Nature Remo E/E Lite)
   - [x] Fetch current power usage
 - [ ] Switch
-- [ ] Light
+- [x] Light
 - [ ] TV
 - [ ] Others
   - [ ] Fetch sensor data
