@@ -60,6 +60,8 @@ async def async_setup(hass, config):
 
     await discovery.async_load_platform(hass, "sensor", DOMAIN, {}, config)
     await discovery.async_load_platform(hass, "climate", DOMAIN, {}, config)
+    await discovery.async_load_platform(hass, "light", DOMAIN, {}, config)
+    await discovery.async_load_platform(hass, "switch", DOMAIN, {}, config)
     return True
 
 
@@ -89,6 +91,14 @@ class NatureRemoAPI:
             f"{_RESOURCE}{path}", data=data, headers=headers
         )
         return await response.json()
+
+    async def getany(self, path):
+        """Get any request"""
+        _LOGGER.debug("Trying to request get:%s", path)
+        headers = {"Authorization": f"Bearer {self._access_token}"}
+        response = await self._session.get(f"{_RESOURCE}{path}", headers=headers)
+        signal_list = {x: x for x in await response.json()}
+        return signal_list
 
 
 class NatureRemoBase(Entity):
@@ -126,3 +136,53 @@ class NatureRemoBase(Entity):
             "model": self._device["serial_number"],
             "sw_version": self._device["firmware_version"],
         }
+
+
+class NatureRemoDeviceBase(Entity):
+    """Nature Remo Device entity base class."""
+
+    def __init__(self, coordinator, device):
+        self._coordinator = coordinator
+        self._name = f"Nature Remo {device['name']}"
+        self._device = device
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return self._name
+
+    @property
+    def unique_id(self):
+        """Return a unique ID."""
+        return self._device["id"]
+
+    @property
+    def should_poll(self):
+        """Return the polling requirement of the entity."""
+        return True
+
+    @property
+    def device_info(self):
+        """Return the device info for the sensor."""
+        # Since device registration requires Config Entries, this dosen't work for now
+        return {
+            "identifiers": {(DOMAIN, self._device["id"])},
+            "name": self._device["name"],
+            "manufacturer": "Nature Remo",
+            "model": self._device["serial_number"],
+            "sw_version": self._device["firmware_version"],
+        }
+
+    async def async_added_to_hass(self):
+        """Subscribe to updates."""
+        self.async_on_remove(
+            self._coordinator.async_add_listener(self.async_write_ha_state)
+        )
+
+    async def async_update(self):
+        """Update the entity.
+
+        Only used by the generic entity update service.
+        """
+        await self._coordinator.async_request_refresh()
+
