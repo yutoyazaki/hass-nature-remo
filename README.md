@@ -17,10 +17,10 @@ Yet another [Home Assistant](https://www.home-assistant.io) component for [Natur
   - [x] Remember previous target temperatures when switching modes back and forth
 - [x] Energy Sensor (Nature Remo E/E Lite)
   - [x] Fetch current power usage
-- [ ] Switch
+- [x] Switch
 - [x] Light
 - [ ] TV
-- [-] Others
+- [x] Others
   - [x] Fetch sensor data
 
 Tested on Home Assistant Core 2021.3.3 on Docker
@@ -40,8 +40,10 @@ Tested on Home Assistant Core 2021.3.3 on Docker
     └── nature_remo
         ├── __init__.py
         ├── climate.py
+        ├── light.py
         ├── manifest.json
-        └── sensor.py
+        ├── sensor.py
+        └── switch.py
 ```
 
 ### Install via git submodule
@@ -54,11 +56,14 @@ git submodule add https://github.com/yutoyazaki/hass-nature-remo.git {path_to_cu
 
 ## Configuration
 
-1. Go to https://home.nature.global and sign in/up
-1. Generate access token
-1. Add following codes to your `configuration.yaml` file
-
-```yaml
-nature_remo:
-  access_token: YOUR_ACCESS_TOKEN
-```
+1. Go to https://home.nature.global and sign in/up.
+2. Generate access token.
+3. Add following codes to your `configuration.yaml` file.
+  ```yaml
+  nature_remo:
+    access_token: !secret nature_remo_token
+  ```
+4. Add the token you've generated in `secrets.yaml` file.
+  ```yaml
+  nature_remo_token: YOUR_ACCESS_TOKEN
+  ```
