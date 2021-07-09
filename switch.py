@@ -38,18 +38,19 @@ class NatureRemoIR(NatureRemoBase, SwitchEntity):
     def __init__(self, coordinator, api, appliance, config) -> None:
         super().__init__(coordinator, appliance)
         self._api = api
-        self._signals = {s["name"]: s["id"] for s in appliance["signals"]}
+        # self._signals = {s["name"]: s["id"] for s in appliance["signals"]}
+        self._signals = appliance["signals"]
         self._is_on = False
 
     @property
-    def assumed_state(self):
+    def assumed_state(self) -> bool:
         """Return True if unable to access real state of the entity."""
         # Remo does return light.state however it doesn't seem to be correct
         # in my experience.
         return True
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """Return the state of the switch."""
         return self._is_on
     
@@ -59,56 +60,36 @@ class NatureRemoIR(NatureRemoBase, SwitchEntity):
 
     async def async_turn_on(self, **kwargs) -> None:
         """Turn on the switch."""
-        _LOGGER.debug(self._signals)
         _LOGGER.debug("Set state: ON")
-        await self._post(self._signals['on'])
-        self._set_on(True)
-        _LOGGER.debug("Cannot find on signal")
+        try:
+            await self._post_icon([
+                "ico_on",
+                "ico_io",
+            ])
+            self._set_on(True)
+        except:
+            _LOGGER.debug("Cannot find on signal")
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off the switch."""
         _LOGGER.debug("Set state: OFF")
-        await self._post(self._signals['off'])
-        self._set_on(False)
-        _LOGGER.debug("Cannot find off signal")
+        try:
+            await self._post_icon([
+                "ico_off",
+                "ico_io",
+            ])
+            self._set_on(False)
+        except:
+            _LOGGER.debug("Cannot find off signal")
 
-    # async def _get_signal(self):
-    #     _LOGGER.debug("Get Signals from aplications: %s", self._appliance_id)
-    #     response = self._api.getany(
-    #         f"/appliances/{self._appliance_id}/signals"
-    #     )
-    #     self._update(response)
-    #     self.async_write_ha_state()
-    #     # await self._coordinator.async_request_refresh()
-    #     # return response
+    async def _post_icon(self, names: [str]) -> None:
+        images = [x.get("image") for x in self._signals]
+        for name in names:
+            if name in images:
+                await self._post(self._signals[images.index(name)]["id"])
+                break
 
-    async def _post(self, signal_id):
-        _LOGGER.debug("Send Signals using signal: %s", signal_id)
-        response = await self._api.post(f"/signals/{signal_id}/send", None)
-        # self._update(response)
+    async def _post(self, signal: str) -> None:
+        _LOGGER.debug("Send Signals using signal: %s, signal")
+        response = await self._api.post(f"/signals/{signal}/send", None)
         self.async_write_ha_state()
-
-    # async def async_added_to_hass(self):
-    #     """Subscribe to updates."""
-    #     self.async_on_remove(
-    #         self._coordinator.async_add_listener(self.async_write_ha_state)
-    #     )
-
-    # async def async_update(self):
-    #     """Update the entity.
-    #     Only used by the generic entity update service.
-    #     """
-    #     await self._coordinator.async_request_refresh()
-
-    # @callback
-    # def _update_callback(self):
-    #     self._update(
-    #         self._coordinator.data["appliances"][self._appliance_id]["settings"],
-    #         self._coordinator.data["devices"][self._device["id"]],
-    #     )
-    #     self.async_write_ha_state()
-
-    # def _update(self, sw_settings, device=None):
-    #     # hold this to determin the ac mode while it's turned-off
-    #     self._remo_mode = sw_settings["mode"]
-    #     _LOGGER.debug(sw_settings)
