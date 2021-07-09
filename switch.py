@@ -22,7 +22,6 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     _LOGGER.debug("Setting up IR platform.")
     coordinator = hass.data[DOMAIN]["coordinator"]
     api = hass.data[DOMAIN]["api"]
-    loop = hass.loop
     config = hass.data[DOMAIN]["config"]
     appliances = coordinator.data["appliances"]
     async_add_entities(
@@ -39,63 +38,48 @@ class NatureRemoIR(NatureRemoBase, SwitchEntity):
     def __init__(self, coordinator, api, appliance, config) -> None:
         super().__init__(coordinator, appliance)
         self._api = api
-        self._state = False
-        await self._get_signal()
+        self._signals = {s["name"]: s["id"] for s in appliance["signals"]}
+        self._is_on = False
 
-    async def async_added_to_hass(self) -> None:
-        """Set up a switch."""
-        self.async_on_remove(
-            self._coordinator.async_add_listener(self._update_callback)
-        )
-
-    # @property
-    # def state(self):
-    #     """Return the state of the switch."""
-    #     return self._state
+    @property
+    def assumed_state(self):
+        """Return True if unable to access real state of the entity."""
+        # Remo does return light.state however it doesn't seem to be correct
+        # in my experience.
+        return True
 
     @property
     def is_on(self):
         """Return the state of the switch."""
-        return self._state
+        return self._is_on
+    
+    def _set_on(self, is_on: bool) -> None:
+        self._is_on = is_on
+        self.async_write_ha_state()
 
     async def async_turn_on(self, **kwargs) -> None:
         """Turn on the switch."""
         _LOGGER.debug("Set state: ON")
-        # signal_list = await self._get_signal()
-        signal_list = asyncio.run_coroutine_threadsafe(self._get_signal(), self._coordinator).result()
-        # find on signal
-        for signal in signal_list:
-            _LOGGER.debug("~~~~~~~~~~", signal, "~~~~~~~~~~")
-            if signal['name'] == "on":
-                self._post(signal['id'])
-                self._state = True
-                return
+        await self._post({"button": "on"})
+        self._set_on(True)
         _LOGGER.debug("Cannot find on signal")
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off the switch."""
         _LOGGER.debug("Set state: OFF")
-        # signal_list = await self._get_signal()
-        signal_list = asyncio.run_coroutine_threadsafe(self._get_signal(), self._coordinator).result()
-        # find off signal
-        _LOGGER.debug("===== Check =====")
-        for signal in signal_list:
-            _LOGGER.debug("~~~~~~~~~~", signal, "~~~~~~~~~~")
-            if signal['name'] == "off":
-                self._post(signal['id'])
-                self._state = False
-                return
+        await self._post({"button": "off"})
+        self._set_on(False)
         _LOGGER.debug("Cannot find off signal")
 
-    async def _get_signal(self):
-        _LOGGER.debug("Get Signals from aplications: %s", self._appliance_id)
-        response = self._api.getany(
-            f"/appliances/{self._appliance_id}/signals"
-        )
-        self._update(response)
-        self.async_write_ha_state()
-        # await self._coordinator.async_request_refresh()
-        # return response
+    # async def _get_signal(self):
+    #     _LOGGER.debug("Get Signals from aplications: %s", self._appliance_id)
+    #     response = self._api.getany(
+    #         f"/appliances/{self._appliance_id}/signals"
+    #     )
+    #     self._update(response)
+    #     self.async_write_ha_state()
+    #     # await self._coordinator.async_request_refresh()
+    #     # return response
 
     async def _post(self, signal_id):
         _LOGGER.debug("Send Signals using signal: %s", signal_id)
@@ -105,29 +89,27 @@ class NatureRemoIR(NatureRemoBase, SwitchEntity):
         # self._update(response)
         self.async_write_ha_state()
 
-    async def async_added_to_hass(self):
-        """Subscribe to updates."""
-        self.async_on_remove(
-            self._coordinator.async_add_listener(self.async_write_ha_state)
-        )
+    # async def async_added_to_hass(self):
+    #     """Subscribe to updates."""
+    #     self.async_on_remove(
+    #         self._coordinator.async_add_listener(self.async_write_ha_state)
+    #     )
 
-    async def async_update(self):
-        """Update the entity.
+    # async def async_update(self):
+    #     """Update the entity.
+    #     Only used by the generic entity update service.
+    #     """
+    #     await self._coordinator.async_request_refresh()
 
-        Only used by the generic entity update service.
-        """
-        await self._coordinator.async_request_refresh()
+    # @callback
+    # def _update_callback(self):
+    #     self._update(
+    #         self._coordinator.data["appliances"][self._appliance_id]["settings"],
+    #         self._coordinator.data["devices"][self._device["id"]],
+    #     )
+    #     self.async_write_ha_state()
 
-    @callback
-    def _update_callback(self):
-        self._update(
-            self._coordinator.data["appliances"][self._appliance_id]["settings"],
-            self._coordinator.data["devices"][self._device["id"]],
-        )
-        self.async_write_ha_state()
-
-    def _update(self, sw_settings, device=None):
-        # hold this to determin the ac mode while it's turned-off
-        self._remo_mode = sw_settings["mode"]
-
-        _LOGGER.debug(sw_settings)
+    # def _update(self, sw_settings, device=None):
+    #     # hold this to determin the ac mode while it's turned-off
+    #     self._remo_mode = sw_settings["mode"]
+    #     _LOGGER.debug(sw_settings)
