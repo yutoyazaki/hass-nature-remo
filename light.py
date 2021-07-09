@@ -95,7 +95,7 @@ class NatureRemoLight(NatureRemoBase, LightEntity):
 
     async def async_turn_off(self, **kwargs):
         """Turn device off."""
-        await self._post({"button": "onoff"})
+        await self._post({"button": "off"})
         self._set_on(False)
 
     # LightEntity methods

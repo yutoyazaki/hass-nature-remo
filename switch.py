@@ -59,15 +59,16 @@ class NatureRemoIR(NatureRemoBase, SwitchEntity):
 
     async def async_turn_on(self, **kwargs) -> None:
         """Turn on the switch."""
+        _LOGGER.debug(self._signals)
         _LOGGER.debug("Set state: ON")
-        await self._post({"button": "on"})
+        await self._post(self._signals['on'])
         self._set_on(True)
         _LOGGER.debug("Cannot find on signal")
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off the switch."""
         _LOGGER.debug("Set state: OFF")
-        await self._post({"button": "off"})
+        await self._post(self._signals['off'])
         self._set_on(False)
         _LOGGER.debug("Cannot find off signal")
 
@@ -83,9 +84,7 @@ class NatureRemoIR(NatureRemoBase, SwitchEntity):
 
     async def _post(self, signal_id):
         _LOGGER.debug("Send Signals using signal: %s", signal_id)
-        response = await self._api.post(
-            f"/signals/{signal_id}/send"
-        )
+        response = await self._api.post(f"/signals/{signal_id}/send", None)
         # self._update(response)
         self.async_write_ha_state()
 
