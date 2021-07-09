@@ -61,6 +61,7 @@ async def async_setup(hass, config):
     await discovery.async_load_platform(hass, "sensor", DOMAIN, {}, config)
     await discovery.async_load_platform(hass, "climate", DOMAIN, {}, config)
     await discovery.async_load_platform(hass, "light", DOMAIN, {}, config)
+    await discovery.async_load_platform(hass, "switch", DOMAIN, {}, config)
     return True
 
 
@@ -90,6 +91,14 @@ class NatureRemoAPI:
             f"{_RESOURCE}{path}", data=data, headers=headers
         )
         return await response.json()
+
+    async def getany(self, path):
+        """Get any request"""
+        _LOGGER.debug("Trying to request get:%s", path)
+        headers = {"Authorization": f"Bearer {self._access_token}"}
+        response = await self._session.get(f"{_RESOURCE}{path}", headers=headers)
+        signal_list = {x: x for x in await response.json()}
+        return signal_list
 
 
 class NatureRemoBase(Entity):
