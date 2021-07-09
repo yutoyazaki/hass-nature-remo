@@ -20,8 +20,8 @@ Yet another [Home Assistant](https://www.home-assistant.io) component for [Natur
 - [ ] Switch
 - [ ] Light
 - [ ] TV
-- [ ] Others
-  - [ ] Fetch sensor data
+- [X] Others
+  - [X] Fetch sensor data
 
 Tested on Home Assistant Core 2021.3.3 on Docker
 
