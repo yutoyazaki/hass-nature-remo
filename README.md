@@ -4,7 +4,7 @@ Yet another [Home Assistant](https://www.home-assistant.io) component for [Natur
 
 ⚠️This integration is neither Nature Remo official nor Home Assistant official. **Use at your own risk.** ⚠️
 
-<img src="./assets/screenshot_1.png" width="600"><img src="./assets/screenshot_2.png" width="200">
+<img src="https://raw.githubusercontent.com/yutoyazaki/hass-nature-remo/main/assets/screenshot_1.png" width="600"><img src="https://raw.githubusercontent.com/yutoyazaki/hass-nature-remo/main/assets/screenshot_2.png" width="200">
 
 ## Supported features
 
@@ -26,6 +26,15 @@ Yet another [Home Assistant](https://www.home-assistant.io) component for [Natur
 Tested on Home Assistant Core 2021.3.3 on Docker
 
 ## Installation
+
+### Install via HACS Custom repositories
+
+https://hacs.xyz/docs/faq/custom_repositories
+
+Enter the following information in the dialog and click ADD button.
+
+Repository: https://github.com/yutoyazaki/hass-nature-remo
+Category: Integrations
 
 ### Manual Install
 
